@@ -1,140 +1,149 @@
 #include <Servo.h>
-#include <Stepper.h>
 
-const int stepsPerRevolution = 200; 
-Stepper myStepper(stepsPerRevolution, 6,7); 
-// 6 - INPUT PIN 1
-// 7 - INPUT PIN 2
- 
-//-------------------------
 Servo servo_one;  // First Servo Objsect;
 Servo servo_two;  // Second Servo Objsect;
-Servo servo_three;  // Third Servo Objsect;
-Servo servo_four;  // Forth Servo Objsect;
-
-
-int head_unit_four_pos = 0;    // variable to store the servo position
-int head_unit_four_pin = 8;    //BLUE // pin number 11 for the first head unit
-
+bool CheckInput = true;
 int head_unit_one_pos = 0;    // variable to store the servo position
-int head_unit_one_pin = 9;    //GREEN // pin number 9 for the first head unit
-
+int head_unit_one_pin = 8;    // pin number 8 for the first head unit
 int head_unit_two_pos = 0;    // variable to store the servo position
-int head_unit_two_pin = 10;    //YELLOW // pin number 10 for the second head unit
+int head_unit_two_pin = 10;   // pin number 10 for the second head unit
+char NumberOfLevel = 0;
 
-int head_unit_three_pos = 0;    // variable to store the servo position
-int head_unit_three_pin = 11;    //ORANGE // pin number 11 for the first head unit
+const int dirPin = 2;         
+const int stepPin = 3;
+const int stepsToMove = 1000;
+int delayMicro=600;            //250-600 Normal speed per quarter step
 
 
 void setup() {
-
-  // set the speed at 60 rpm:
-  myStepper.setSpeed(80);
-  // initialize the serial port:
   Serial.begin(9600);
-  //------------------------------------
   servo_one.attach(head_unit_one_pin);  // attaches the servo of the head_unit_one
   servo_two.attach(head_unit_two_pin);  // attaches the servo of the head_unit_two
-  servo_three.attach(head_unit_three_pin);  // attaches the servo of the head_unit_three
-  servo_four.attach(head_unit_four_pin);  // attaches the servo of the head_unit_four
+  pinMode(stepPin, OUTPUT);
+  pinMode(dirPin, OUTPUT);
 }
 
-void loop() {
-
-  // step one revolution  in one direction:
-   Serial.println("clockwise");
-  myStepper.step(stepsPerRevolution);
-  delay(500);
-
-   // step one revolution in the other direction:
-  Serial.println("counterclockwise");
-  myStepper.step(-stepsPerRevolution);
-  delay(500);
- // ----------------------------------
-  headUnitTwo();
-  headUnitOne();
-//  headUnitThree();
-//  headUnitFour();
-
-  testloop();
-}
-
-void headUnitOne() {
-  for (head_unit_one_pos = 0; head_unit_one_pos <= 180; head_unit_one_pos += 5) {   // goes from 0 degrees to 180 degrees in steps of 1 degree
-    servo_one.write(head_unit_one_pos);                                                 // tell servo to go to position in variable 'pos'
-    
-  }
-  delay(1500);                                                                        // waits 15ms for the servo to reach the position
-  for (head_unit_one_pos = 180; head_unit_one_pos >= 0; head_unit_one_pos -= 5) {     // goes from 180 degrees to 0 degrees
-    servo_one.write(head_unit_one_pos);                                                 // tell servo to go to position in variable 'pos'
-    
-  }
-  delay(1500);                                                                        // waits 15ms for the servo to reach the position
-}
-
-void headUnitTwo() {
-  for (head_unit_two_pos = 0; head_unit_two_pos <= 180; head_unit_two_pos += 5) {   // goes from 0 degrees to 180 degrees in steps of 1 degree
-    servo_two.write(head_unit_two_pos);                                                 // tell servo to go to position in variable 'pos'
-  }
-  delay(1500);                                                                        // waits 15ms for the servo to reach the position
+void loop(){
+  NumberOfLevel = 0;
+  CheckInput = true;
   
-  for (head_unit_two_pos = 180; head_unit_two_pos >= 0; head_unit_two_pos -= 5) {     // goes from 180 degrees to 0 degrees
-    servo_two.write(head_unit_two_pos);                                                 // tell servo to go to position in variable 'pos'
+  if (Serial.available() > 0) {
+//    if (NumberOfLevel == 0){
+//    Menu(NumberOfLevel);
+//    }
+//    Serial.println("Please select the step:");
+    NumberOfLevel = Serial.read();
+//    CheckInputStep(NumberOfLevel);
+//    Serial.println(NumberOfLevel);
   }
-  delay(1500);                                                                        // waits 15ms for the servo to reach the position
+  
+  switch (NumberOfLevel){
+    case '1':
+      Serial.println("Step 1: Lower the needle");
+      LoweringNeedleDown();
+      Serial.println("Step 1 done");
+      break;
+      
+    case '2':
+      Serial.println("Step 2: Servo motor wrapped in thread on the needle");
+      ServoMotorWrapped();
+      Serial.println("Step 2 done");        
+      break;
+      
+    case '3':
+      Serial.println("Step 3: Rotate the needle counterclockwise 180 degrees");
+      NeedleRotation();
+      Serial.println("Step 3 done");
+      break;
+      
+    case '4':
+      Serial.println("Step 4: Lifting needle up back");
+      LiftingNeedleUp();
+      Serial.println("Step 4 done");
+      break;
+      
+    case '5':
+      Serial.println("Step 5: Rotate the needle clockwise 180 degrees back");
+      NeedleRotation();
+      Serial.println("Step 5 done");
+      break;
+      
+    case '6':
+      Serial.println("Step 6:  ");
+
+      Serial.println("Step 6 done");
+      break;
+  }
 }
 
-void headUnitThree() {
-  for (head_unit_three_pos = 0; head_unit_three_pos <= 180; head_unit_three_pos += 5) {   // goes from 0 degrees to 180 degrees in steps of 1 degree
-    servo_three.write(head_unit_three_pin);                                                 // tell servo to go to position in variable 'pos'
-    
-  }
-  delay(1500);                                                                        // waits 15ms for the servo to reach the position
-  for (head_unit_three_pos = 180; head_unit_three_pos >= 0; head_unit_three_pos -= 5) {     // goes from 180 degrees to 0 degrees
-    servo_three.write(head_unit_three_pos);                                                 // tell servo to go to position in variable 'pos'
-    
-  }
-  delay(1500);                                                                        // waits 15ms for the servo to reach the position
-}
-
-void headUnitFour() {
-  
-  for (head_unit_four_pos = 0; head_unit_four_pos <= 180; head_unit_four_pos += 5) {   // goes from 0 degrees to 180 degrees in steps of 1 degree
-    servo_four.write(head_unit_four_pos);                                                 // tell servo to go to position in variable 'pos'
-  }
-  delay(1500);                                                                        // waits 15ms for the servo to reach the position
-  
-  for (head_unit_four_pos = 180; head_unit_four_pos >= 0; head_unit_four_pos -= 5) {     // goes from 180 degrees to 0 degrees
-    servo_four.write(head_unit_four_pos);                                                 // tell servo to go to position in variable 'pos'
-  }
-  delay(1500);                                                                        // waits 15ms for the servo to reach the position
-  
-}
-
-void testloop(){
-
-    for (head_unit_four_pos = 0; head_unit_four_pos <= 180; head_unit_four_pos += 5) {   // goes from 0 degrees to 180 degrees in steps of 1 degree
-    servo_four.write(head_unit_four_pos);                                                 // tell servo to go to position in variable 'pos'
-  }
-  delay(1500);                                                                        // waits 15ms for the servo to reach the position
-
-    for (head_unit_three_pos = 0; head_unit_three_pos <= 180; head_unit_three_pos += 5) {   // goes from 0 degrees to 180 degrees in steps of 1 degree
-    servo_three.write(head_unit_three_pos);                                                 // tell servo to go to position in variable 'pos'
-  }
+int Menu(int i_NumberOfLevel){
+  Serial.println("Welcome to TechCouture.");
   delay(1500);
+  Serial.flush();
+  Serial.println("Step 1: Lower the needle");
+  Serial.println("Step 2: Servo motor wrapped in thread on the needle");
+  Serial.println("Step 3: Rotate the needle counterclockwise 180 degrees");
+  Serial.println("Step 4: Lifting needle up back");
+  Serial.println("Step 5: Rotate the needle clockwise 180 degrees back");
+  Serial.println("Step 6: ");
+}
 
-    for (head_unit_three_pos = 180; head_unit_three_pos >= 0; head_unit_three_pos -= 5) {     // goes from 180 degrees to 0 degrees
-    servo_three.write(head_unit_three_pos);                                                 // tell servo to go to position in variable 'pos'
+bool CheckInputStep(int i_GetStepNumber){
+  if  (i_GetStepNumber >= 1 && i_GetStepNumber <= 6){
+    bool CheckInput = false;
   }
-  delay(1500); 
-
-
-  
-  
-  for (head_unit_four_pos = 180; head_unit_four_pos >= 0; head_unit_four_pos -= 5) {     // goes from 180 degrees to 0 degrees
-    servo_four.write(head_unit_four_pos);                                                 // tell servo to go to position in variable 'pos'
-    servo_three.write(head_unit_four_pos);                                                 // tell servo to go to position in variable 'pos'
+  else{
+    Serial.println("Worng Input!");
   }
-  delay(5000);  
+}
+
+void LoweringNeedleDown(){
+  for (head_unit_one_pos = 0; head_unit_one_pos <= 180; head_unit_one_pos += 5){    // goes from 0 degrees to 180 degrees in steps of 1 degree
+    servo_one.write(head_unit_one_pos);                                             // tell servo to go to position in variable 'pos'
+  }
+}
+
+void ServoMotorWrapped(){
+  // Set motor direction counterclockwise
+  digitalWrite(dirPin, LOW);
+ 
+  // Spin motor quickly
+  for(int x = 0; x < stepsToMove; x++)
+  {
+    digitalWrite(stepPin, HIGH);
+    delayMicroseconds(delayMicro);
+    digitalWrite(stepPin, LOW);
+    delayMicroseconds(delayMicro);
+  }
+  delay(1000); // Wait a second
   
+  digitalWrite(dirPin, HIGH);
+   
+  // Spin motor quickly
+  for(int x = 0; x < stepsToMove; x++){
+    digitalWrite(stepPin, HIGH);
+    delayMicroseconds(delayMicro);
+    digitalWrite(stepPin, LOW);
+    delayMicroseconds(delayMicro);
+  }
+  delay(1000); // Wait a second
+}
+
+void NeedleRotation(){
+  for (head_unit_two_pos = 180; head_unit_two_pos >= 0; head_unit_two_pos -= 5){     // goes from 180 degrees to 0 degrees
+    servo_two.write(head_unit_two_pos);                                              // tell servo to go to position in variable 'pos'
+  }
+}
+
+void LiftingNeedleUp(){
+  for (head_unit_one_pos = 180; head_unit_one_pos >= 0; head_unit_one_pos -= 5){     // goes from 180 degrees to 0 degrees
+    servo_one.write(head_unit_one_pos);                                              // tell servo to go to position in variable 'pos'
+  }
+  
+}
+
+void NeedleRotationBack(){
+  for (head_unit_two_pos = 0; head_unit_two_pos <= 180; head_unit_two_pos += 5) {   // goes from 0 degrees to 180 degrees in steps of 1 degree
+  servo_two.write(head_unit_two_pos);                                                 // tell servo to go to position in variable 'pos'
+  }
 }
